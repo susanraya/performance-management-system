@@ -2,6 +2,709 @@
 openapi: 3.1.0
 info:
   title: performance management system
-  version: architecture-v0
+  version: architecture-v1
   description: Designed API from the approved architecture (not extracted from code).
-paths: {}
+paths:
+  /api/assignments/{id}:
+    get:
+      summary: Load a reviewer's assigned questionnaire and any saved draft.
+      description: Load a reviewer's assigned questionnaire and any saved draft.
+      operationId: get_api_assignments_id
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: '{cycle, subject, questions, draft}'
+      security:
+      - bearerAuth: []
+  /api/assignments/{id}/draft:
+    put:
+      summary: Save partial answers to return to later.
+      description: Save partial answers to return to later.
+      operationId: put_api_assignments_id_draft
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: '{answers:[{question_id, rating_value?, text_value?}]}'
+      responses:
+        '200':
+          description: '200'
+      security:
+      - bearerAuth: []
+  /api/assignments/{id}/submit:
+    post:
+      summary: Submit completed feedback; blocked if the cycle is closed.
+      description: Submit completed feedback; blocked if the cycle is closed.
+      operationId: post_api_assignments_id_submit
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: '{answers:[...]}'
+      responses:
+        '200':
+          description: 200 or 409 cycle_closed
+      security:
+      - bearerAuth: []
+  /api/auth/login:
+    post:
+      summary: Authenticate with email and password; returns session token and role.
+        Generic error on failure (no enumeration).
+      description: Authenticate with email and password; returns session token and
+        role. Generic error on failure (no enumeration).
+      operationId: post_api_auth_login
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: '{email, password}'
+      responses:
+        '200':
+          description: '{token, role} or 401 {generic_error}'
+  /api/auth/logout:
+    post:
+      summary: End the current session so protected pages require re-authentication.
+      description: End the current session so protected pages require re-authentication.
+      operationId: post_api_auth_logout
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: '{}'
+      responses:
+        '200':
+          description: '204'
+      security:
+      - bearerAuth: []
+  /api/auth/password-reset/confirm:
+    post:
+      summary: Set a new password using a valid unexpired token meeting password rules.
+      description: Set a new password using a valid unexpired token meeting password
+        rules.
+      operationId: post_api_auth_password_reset_confirm
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: '{token, new_password}'
+      responses:
+        '200':
+          description: 200 or 400
+  /api/auth/password-reset/request:
+    post:
+      summary: Request a time-limited reset link emailed to the registered address.
+      description: Request a time-limited reset link emailed to the registered address.
+      operationId: post_api_auth_password_reset_request
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: '{email}'
+      responses:
+        '200':
+          description: '202'
+  /api/cycles:
+    post:
+      summary: Create a draft feedback cycle for a review period.
+      description: Create a draft feedback cycle for a review period.
+      operationId: post_api_cycles
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: '{name, review_period, start_date, end_date, min_reviewers}'
+      responses:
+        '200':
+          description: 201 {cycle}
+      security:
+      - bearerAuth: []
+  /api/cycles/{id}/close:
+    post:
+      summary: Close the cycle so no further submissions are accepted.
+      description: Close the cycle so no further submissions are accepted.
+      operationId: post_api_cycles_id_close
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: '{}'
+      responses:
+        '200':
+          description: 200 {status}
+      security:
+      - bearerAuth: []
+  /api/cycles/{id}/dashboard:
+    get:
+      summary: 'Cycle progress: overall completion and per-subject submitted vs outstanding,
+        flagging below-threshold subjects.'
+      description: 'Cycle progress: overall completion and per-subject submitted vs
+        outstanding, flagging below-threshold subjects.'
+      operationId: get_api_cycles_id_dashboard
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: '{overall, subjects:[{subject_id, submitted, outstanding, below_threshold}]}'
+      security:
+      - bearerAuth: []
+  /api/cycles/{id}/launch:
+    post:
+      summary: Validate questionnaire and reviewers, activate the cycle and enqueue
+        invitations; warns on subjects below threshold.
+      description: Validate questionnaire and reviewers, activate the cycle and enqueue
+        invitations; warns on subjects below threshold.
+      operationId: post_api_cycles_id_launch
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: '{}'
+      responses:
+        '200':
+          description: 200 {status, warnings} or 400
+      security:
+      - bearerAuth: []
+  /api/cycles/{id}/questions:
+    post:
+      summary: Add a rating-scale or open-text question to the cycle questionnaire.
+      description: Add a rating-scale or open-text question to the cycle questionnaire.
+      operationId: post_api_cycles_id_questions
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: '{type, text, scale_max?, display_order}'
+      responses:
+        '200':
+          description: 201 {question}
+      security:
+      - bearerAuth: []
+  /api/cycles/{id}/reminders:
+    post:
+      summary: Trigger reminder emails to reviewers with outstanding feedback.
+      description: Trigger reminder emails to reviewers with outstanding feedback.
+      operationId: post_api_cycles_id_reminders
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: '{}'
+      responses:
+        '200':
+          description: '202'
+      security:
+      - bearerAuth: []
+  /api/cycles/{id}/subjects:
+    post:
+      summary: Add a subject and their reviewers; returns reviewer suggestions from
+        reporting lines.
+      description: Add a subject and their reviewers; returns reviewer suggestions
+        from reporting lines.
+      operationId: post_api_cycles_id_subjects
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: '{subject_id, reviewers:[{reviewer_id, relationship}]}'
+      responses:
+        '200':
+          description: 201 {cycle_subject, warnings}
+      security:
+      - bearerAuth: []
+  /api/cycles/{id}/subjects/{sid}/report:
+    get:
+      summary: Return the anonymised aggregated report if viewer authorised and threshold
+        met, else a withheld message.
+      description: Return the anonymised aggregated report if viewer authorised and
+        threshold met, else a withheld message.
+      operationId: get_api_cycles_id_subjects_sid_report
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: sid
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: '{aggregated_ratings, collated_comments} or {withheld, reason}'
+      security:
+      - bearerAuth: []
+  /api/cycles/{id}/subjects/{sid}/report.pdf:
+    get:
+      summary: Export the visible aggregated report to PDF; no PDF when withheld.
+      description: Export the visible aggregated report to PDF; no PDF when withheld.
+      operationId: get_api_cycles_id_subjects_sid_report_pdf
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: sid
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: application/pdf or {withheld, reason}
+      security:
+      - bearerAuth: []
+  /api/cycles/{id}/subjects/{sid}/suggested-reviewers:
+    get:
+      summary: Suggest peers, direct reports and manager from reporting lines.
+      description: Suggest peers, direct reports and manager from reporting lines.
+      operationId: get_api_cycles_id_subjects_sid_suggested_reviewers
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: sid
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: '[{reviewer_id, relationship}]'
+      security:
+      - bearerAuth: []
+  /api/employees:
+    get:
+      summary: List employee directory (HR sees all; others scoped).
+      description: List employee directory (HR sees all; others scoped).
+      operationId: get_api_employees
+      parameters: []
+      responses:
+        '200':
+          description: '[{id, name, work_email, role, manager_id, is_active}]'
+      security:
+      - bearerAuth: []
+    post:
+      summary: Create an employee record; rejects duplicate email.
+      description: Create an employee record; rejects duplicate email.
+      operationId: post_api_employees
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: '{name, work_email, role, manager_id}'
+      responses:
+        '200':
+          description: 201 {employee} or 400 duplicate
+      security:
+      - bearerAuth: []
+  /api/employees/{id}:
+    patch:
+      summary: Edit details, change manager (rejects self/circular) or deactivate.
+      description: Edit details, change manager (rejects self/circular) or deactivate.
+      operationId: patch_api_employees_id
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: '{name?, manager_id?, is_active?}'
+      responses:
+        '200':
+          description: 200 {employee} or 400
+      security:
+      - bearerAuth: []
+  /api/privacy-notice/acknowledge:
+    post:
+      summary: Record that the current user was shown and acknowledged the privacy
+        notice.
+      description: Record that the current user was shown and acknowledged the privacy
+        notice.
+      operationId: post_api_privacy_notice_acknowledge
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: '{notice_version}'
+      responses:
+        '200':
+          description: '201'
+      security:
+      - bearerAuth: []
+  /api/rights-requests:
+    post:
+      summary: HR records a data-principal access, correction or erasure request.
+      description: HR records a data-principal access, correction or erasure request.
+      operationId: post_api_rights_requests
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: '{employee_id, request_type, notes?}'
+      responses:
+        '200':
+          description: 201 {request}
+      security:
+      - bearerAuth: []
+  /api/rights-requests/{id}/action:
+    post:
+      summary: HR actions the request (retrieve, correct or erase) with the action
+        logged; erasure retains only anonymised aggregates.
+      description: HR actions the request (retrieve, correct or erase) with the action
+        logged; erasure retains only anonymised aggregates.
+      operationId: post_api_rights_requests_id_action
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: '{changes?}'
+      responses:
+        '200':
+          description: 200 {status}
+      security:
+      - bearerAuth: []
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  schemas:
+    employee:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        work_email:
+          type: string
+        password_hash:
+          type: string
+        role:
+          type: string
+        manager_id:
+          type: string
+        is_active:
+          type: boolean
+        is_erased:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+      required:
+      - id
+      - name
+      - work_email
+      - password_hash
+      - role
+      - is_active
+      - is_erased
+      - created_at
+    password_reset_token:
+      type: object
+      properties:
+        id:
+          type: string
+        employee_id:
+          type: string
+        token_hash:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+        used_at:
+          type: string
+          format: date-time
+      required:
+      - id
+      - employee_id
+      - token_hash
+      - expires_at
+    cycle:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        review_period:
+          type: string
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        status:
+          type: string
+        min_reviewers:
+          type: integer
+        created_by:
+          type: string
+      required:
+      - id
+      - name
+      - review_period
+      - start_date
+      - end_date
+      - status
+      - min_reviewers
+      - created_by
+    question:
+      type: object
+      properties:
+        id:
+          type: string
+        cycle_id:
+          type: string
+        type:
+          type: string
+        text:
+          type: string
+        scale_max:
+          type: integer
+        display_order:
+          type: integer
+      required:
+      - id
+      - cycle_id
+      - type
+      - text
+      - display_order
+    cycle_subject:
+      type: object
+      properties:
+        id:
+          type: string
+        cycle_id:
+          type: string
+        subject_id:
+          type: string
+      required:
+      - id
+      - cycle_id
+      - subject_id
+    reviewer_assignment:
+      type: object
+      properties:
+        id:
+          type: string
+        cycle_subject_id:
+          type: string
+        reviewer_id:
+          type: string
+        relationship:
+          type: string
+        access_token:
+          type: string
+        status:
+          type: string
+        submitted_at:
+          type: string
+          format: date-time
+      required:
+      - id
+      - cycle_subject_id
+      - reviewer_id
+      - relationship
+      - access_token
+      - status
+    response:
+      type: object
+      properties:
+        id:
+          type: string
+        reviewer_assignment_id:
+          type: string
+        question_id:
+          type: string
+        rating_value:
+          type: integer
+        text_value:
+          type: string
+        is_draft:
+          type: boolean
+      required:
+      - id
+      - reviewer_assignment_id
+      - question_id
+      - is_draft
+    email_log:
+      type: object
+      properties:
+        id:
+          type: string
+        cycle_id:
+          type: string
+        reviewer_assignment_id:
+          type: string
+        email_type:
+          type: string
+        status:
+          type: string
+        error_detail:
+          type: string
+        sent_at:
+          type: string
+          format: date-time
+      required:
+      - id
+      - email_type
+      - status
+    privacy_notice_ack:
+      type: object
+      properties:
+        id:
+          type: string
+        employee_id:
+          type: string
+        notice_version:
+          type: string
+        acknowledged_at:
+          type: string
+          format: date-time
+      required:
+      - id
+      - employee_id
+      - notice_version
+      - acknowledged_at
+    data_rights_request:
+      type: object
+      properties:
+        id:
+          type: string
+        employee_id:
+          type: string
+        request_type:
+          type: string
+        status:
+          type: string
+        requested_at:
+          type: string
+          format: date-time
+        actioned_by:
+          type: string
+        actioned_at:
+          type: string
+          format: date-time
+        notes:
+          type: string
+      required:
+      - id
+      - employee_id
+      - request_type
+      - status
+      - requested_at
+    audit_log:
+      type: object
+      properties:
+        id:
+          type: string
+        actor_id:
+          type: string
+        action:
+          type: string
+        target_type:
+          type: string
+        target_id:
+          type: string
+        detail:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+      required:
+      - id
+      - action
+      - target_type
+      - created_at

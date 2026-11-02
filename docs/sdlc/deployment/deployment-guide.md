@@ -7,7 +7,14 @@ Pushes to `main` run `.github/workflows/deploy.yml`, which builds the API image 
 <!-- sdlc:auto:end how-it-deploys -->
 
 <!-- sdlc:auto:start environments -->
-_No environments recorded._
+| Name | Service | Runtime | Scaling | Environment |
+|---|---|---|---|---|
+| Angular Static Hosting | S3 + CloudFront (ap-south-1 origin) | Static files | CDN | dev |
+| Django API | ECS Fargate (gunicorn) | Python 3.12 / Django 5.1 | 1-2 tasks | dev |
+| Celery Worker & Beat | ECS Fargate | Python 3.12 / Celery | 1 task | dev |
+| PostgreSQL | Amazon RDS for PostgreSQL 16 (encrypted at rest, ap-south-1) | PostgreSQL 16 | single instance | dev |
+| Redis | ECS container redis:7-alpine (ap-south-1) | Redis 7 | single instance | dev |
+| SMTP Provider | India-based SMTP (external saas) | SMTP | n/a | dev |
 <!-- sdlc:auto:end environments -->
 
 <!-- sdlc:auto:start live -->
@@ -15,5 +22,20 @@ _Not deployed yet._
 <!-- sdlc:auto:end live -->
 
 <!-- sdlc:auto:start topology -->
-_No deployment topology recorded._
+```mermaid
+graph LR
+  n_Angular_Static_Hosting["Angular Static Hosting<br/>S3 + CloudFront (ap-south-1 origin)"]
+  n_Django_API["Django API<br/>ECS Fargate (gunicorn)"]
+  n_Celery_Worker___Beat["Celery Worker & Beat<br/>ECS Fargate"]
+  n_PostgreSQL["PostgreSQL<br/>Amazon RDS for PostgreSQL 16 (encrypted at rest, ap-south-1)"]
+  n_Redis["Redis<br/>ECS container redis:7-alpine (ap-south-1)"]
+  n_SMTP_Provider["SMTP Provider<br/>India-based SMTP (external saas)"]
+  n_Angular_Static_Hosting -->|"HTTPS"| n_Django_API
+  n_Django_API -->|"TLS (PostgreSQL)"| n_PostgreSQL
+  n_Django_API -->|"TCP (Redis)"| n_Redis
+  n_Celery_Worker___Beat -->|"TCP (Redis)"| n_Redis
+  n_Celery_Worker___Beat -->|"TLS (PostgreSQL)"| n_PostgreSQL
+  n_Celery_Worker___Beat -->|"SMTP over TLS"| n_SMTP_Provider
+  n_Django_API -->|"SMTP over TLS"| n_SMTP_Provider
+```
 <!-- sdlc:auto:end topology -->
