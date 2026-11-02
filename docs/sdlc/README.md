@@ -5,7 +5,7 @@
 <!-- sdlc:auto:start overview -->
 performance management system
 
-**Documentation version:** v2
+**Documentation version:** v3
 <!-- sdlc:auto:end overview -->
 
 ## Contents
@@ -15,14 +15,14 @@ performance management system
 |---|---|
 | [Requirements](requirements/README.md) | v1 approved |
 | [Architecture](architecture/README.md) | 11 entries |
-| [Development](development/README.md) | 1 entry |
+| [Development](development/README.md) | 7 entries |
 | [Testing](testing/README.md) | 1 entry |
 | [Deployment](deployment/README.md) | 1 entry |
 | [Maintenance](maintenance/README.md) | 1 entry |
 | [Data model](architecture/data-model.md) | generated |
 | [API (OpenAPI)](architecture/api/openapi.yaml) | generated |
 | [Decisions (ADRs)](architecture/adr/README.md) | 4 decisions |
-| [Sprint plan](development/sprint-plan.md) | not generated yet |
+| [Sprint plan](development/sprint-plan.md) | 6 sprints |
 | [Developer guide](development/developer-guide.md) | generated |
 | [API reference](development/api-reference.md) | 1 route |
 | [Test report](testing/test-report.md) | not run yet |
@@ -31,7 +31,7 @@ performance management system
 | [Runbook](deployment/runbook.md) | not deployed yet |
 | [Release notes](deployment/release-notes.md) | 0 releases |
 | [Traceability matrix](traceability-matrix.md) | 22 requirements |
-| [Changelog](CHANGELOG.md) | 2 versions |
+| [Changelog](CHANGELOG.md) | 3 versions |
 <!-- sdlc:auto:end contents -->
 
 ## Open gaps
@@ -71,7 +71,12 @@ performance management system
 
 ### Development
 
-- Development phase has not started: no tickets, sprints, or code exist yet to document.
+- Input contains no record of actual implementation progress, ticket completion status, code commits, or velocity against the 20-point/sprint capacity -- only the planned assignment is available.
+- No dates are given for sprint start/end, so phase timeline cannot be documented.
+- Sprint-to-item mapping is inferred from goal text, not an explicit input field -- confirm against the actual sprint board.
+- No completion/status data provided for these items.
+- No detail on what specific data-principal rights (access, correction, erasure, grievance) US-020 covers -- only the story title is given.
+- US-006, US-017, US-022 are documented as explicit scope exclusions (no HRIS integration, no advanced analytics, no parental consent in v1) -- these are decisions to confirm are still intended, not defects.
 
 ### Testing
 
