@@ -5,7 +5,7 @@
 <!-- sdlc:auto:start overview -->
 performance management system
 
-**Documentation version:** v2
+**Documentation version:** v3
 <!-- sdlc:auto:end overview -->
 
 ## Contents
@@ -31,7 +31,7 @@ performance management system
 | [Runbook](deployment/runbook.md) | deployed |
 | [Release notes](deployment/release-notes.md) | 2 releases |
 | [Traceability matrix](traceability-matrix.md) | 22 requirements |
-| [Changelog](CHANGELOG.md) | 2 versions |
+| [Changelog](CHANGELOG.md) | 3 versions |
 <!-- sdlc:auto:end contents -->
 
 ## Open gaps
@@ -62,11 +62,11 @@ performance management system
 
 ### Deployment
 
-- Deployment date/time not provided.
+- No deployment date/timestamp recorded.
 - No record of who approved or executed this deployment.
-- No rollback or incident plan recorded for this release.
-- No changelog or list of requirements/tickets included in this release, so related_ids cannot be determined -- none of US-001 through US-022 could be linked to this deployment from the given input.
-- No confirmation of environment (staging vs production) beyond the label 'live'.
+- No rollback or contingency plan documented.
+- No mapping provided between this deployment and specific requirements (US-001..US-022), design items, dev tickets, or test results, so it cannot be confirmed which features/fixes this version includes.
+- Frontend domain 'amplifyapp.local' and backend domain 'awsapprunner.local' use .local suffixes, which is unusual for production AWS Amplify/App Runner URLs (normally .amazonaws.com or amplifyapp.com); confirm these are correct and not placeholder/internal values.
 
 ### Maintenance
 
