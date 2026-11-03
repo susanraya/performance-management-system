@@ -5,7 +5,7 @@
 <!-- sdlc:auto:start overview -->
 performance management system
 
-**Documentation version:** v1
+**Documentation version:** v2
 <!-- sdlc:auto:end overview -->
 
 ## Contents
@@ -31,7 +31,7 @@ performance management system
 | [Runbook](deployment/runbook.md) | deployed |
 | [Release notes](deployment/release-notes.md) | 2 releases |
 | [Traceability matrix](traceability-matrix.md) | 22 requirements |
-| [Changelog](CHANGELOG.md) | 1 version |
+| [Changelog](CHANGELOG.md) | 2 versions |
 <!-- sdlc:auto:end contents -->
 
 ## Open gaps
@@ -62,7 +62,11 @@ performance management system
 
 ### Deployment
 
-- No deployment input available: cannot confirm the AWS ap-south-1 infrastructure described in architecture has actually been provisioned or that any release has occurred.
+- Deployment date/time not provided.
+- No record of who approved or executed this deployment.
+- No rollback or incident plan recorded for this release.
+- No changelog or list of requirements/tickets included in this release, so related_ids cannot be determined -- none of US-001 through US-022 could be linked to this deployment from the given input.
+- No confirmation of environment (staging vs production) beyond the label 'live'.
 
 ### Maintenance
 
