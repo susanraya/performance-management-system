@@ -8,10 +8,4 @@
 **Commit:** `65e9501`
 
 _Nothing delivered in this window._
-
-## 65e950147092 — 2026-11-03
-
-**Commit:** `65e9501`
-
-_Nothing delivered in this window._
 <!-- sdlc:auto:end releases -->

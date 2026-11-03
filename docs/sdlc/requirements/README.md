@@ -5,107 +5,95 @@
 <!-- sdlc:auto:start narrative -->
 ## Summary
 
-### EPIC-001 · approved · source: requirements:EPIC-001
+### REQ-TECHSTACK · approved · source: requirements:technology stack
 
-Email/password sign-in for three roles (HR/admin, manager, employee); each role is restricted to its permitted features/data; users can self-service reset a forgotten password. No SSO in v1.
+Product owner approved an exact technology stack: Django 5.1 backend, AWS cloud (Mumbai region), PostgreSQL 16, Angular 22 frontend, with SMTP email and a Redis queue as supporting services.
 
-US-001 (critical) Sign in with email and password: correct credentials authenticate and route to a role-appropriate home screen (AC-001); incorrect credentials show one generic error that does not reveal whether the email is registered (AC-002); signing out ends the session, requiring re-authentication for protected pages (AC-003).
-US-002 (critical) Role-based access enforcement: employees are denied HR-only/manager-only pages and data (AC-004); managers are denied reports for employees outside their reporting line (AC-005); HR/admin has access to employee management, cycle setup, dashboards and reports (AC-006).
-US-003 (medium) Password reset: a reset link is emailed to the registered address on request (AC-007); a valid unexpired link lets the user set a new password meeting password rules and sign in with it (AC-008).
-Epic-level assumption stated in the input: roles are exactly HR/admin, manager and employee; sign-in is email/password only, no SSO in v1.
+Decisions and stated rationale: (1) Django 5.1 replaces the platform default FastAPI because the product is structured record-keeping needing built-in admin, auth and permissions to enforce HR/manager/employee boundaries and DPDP access/correction/erasure actions; no high-throughput API need. (2) AWS chosen because DPDP requires employee/feedback data hosted in India; ap-south-1 (Mumbai) keeps data in-country; AWS is the platform's only deploy target; scale far exceeds the ~200-employee need, so residency/reliability is being bought, not capacity. (3) PostgreSQL 16 chosen for strict relational integrity (employees-managers, cycles-subjects-reviewers, responses-questionnaires) that the anonymity rule and minimum-reviewer threshold depend on; runs in AWS Mumbai. (4) Angular 22 frontend (no stated rationale beyond approval). Approved services: SMTP server (saas, env SMTP_HOST/PORT/USER/PASSWORD) for invitations/reminders/reset emails, India-based provider possible for in-country delivery logs; Redis (container redis:7-alpine) as a background/scheduled queue so HR is not blocked. Required API keys/env vars: REDIS_URL, SMTP_HOST, SMTP_PASSWORD, SMTP_PORT, SMTP_USER.
 
-**Related:** NFR-001, NFR-002, NFR-003, NFR-011, US-001, US-002, US-003
+### REQ-SCOPE · draft · source: requirements:scope summary
 
-- ⚠ The three-role / email-password-only assumption is explicitly flagged in the input as needing confirmation ('Correct if different') -- no product-owner confirmation is present in the material provided.
+Delivery scope is 'lightweight', requirements version 1. Core capabilities are cycle creation, questionnaire building, subject/reviewer selection, feedback submission, aggregated in-app reporting, employee directory, reporting-line management, and email/password sign-in.
 
-### EPIC-002 · approved · source: requirements:EPIC-002
+Explicitly out of scope: HRIS/payroll integration (e.g. Darwinbox, Keka, Workday sync) -- directory data is maintained manually in-app (US-006). In-scope capabilities list matches the 8 epics documented below.
 
-HR/admin manages the employee directory and reporting lines directly in-app; there is no HRIS/payroll sync in v1.
+**Related:** US-006
 
-US-004 (critical) Manage employee records: HR can add employees with name/work email/other details (AC-009); edit details with persisted updates shown app-wide (AC-010); deactivate a leaver so they can't sign in and are excluded from new cycles while historical data is retained (AC-011); duplicate work emails are rejected with a clear validation message (AC-012).
-US-005 (high) Manage reporting lines: HR can assign a manager to an employee so the manager can later access that employee's aggregated report (AC-013); manager changes take effect for future access and are persisted (AC-014); self-manager or direct circular relationships are rejected with a clear message (AC-015).
-US-006 (low) No HRIS integration in v1: directory data is entered and maintained manually; no import/sync from an HRIS or payroll system is offered (AC-016), consistent with the explicit out-of-scope item (HRIS/payroll integration, e.g. Darwinbox, Keka, Workday sync).
+### EPIC-001 · draft · source: requirements:EPIC-001
 
-**Related:** US-004, US-005, US-006
+Email/password sign-in for an internal single-company tool with three roles (HR/admin, manager, employee), each restricted to permitted features/data. No SSO in v1.
 
-### EPIC-003 · approved · source: requirements:EPIC-003
+US-001 (critical): sign in/out with email+password; correct credentials route to role-appropriate home; wrong credentials show one generic error (no account-enumeration, NFR-001); sign-out ends session requiring re-auth (NFR-002). US-002 (critical): role-based access enforcement -- employees blocked from HR/manager-only pages; managers blocked from reports outside their reporting line; HR/admin granted access to employee management, cycle setup, dashboards and all reports. US-003 (medium): password reset via emailed time-limited link (NFR-003); new password must meet password rules. Accepted risk: no SSO in v1 (NFR-011).
 
-HR creates a time-bounded 360° feedback cycle, builds a rating-scale plus open-text questionnaire, selects subjects/reviewers (with reporting-line suggestions), and sets a minimum-reviewer threshold that gates report visibility.
+**Related:** US-001, US-002, US-003, AC-001, AC-002, AC-003, AC-004, AC-005, AC-006, AC-007, AC-008, NFR-001, NFR-002, NFR-003, NFR-011
 
-US-007 (critical) Create a feedback cycle: cycle created with name/review period/dates, saved as draft (AC-017); launching a fully configured cycle (subjects, reviewers, questionnaire) makes it active and triggers invitations (AC-018); reaching the end date or manual close stops further submissions (AC-019).
-US-008 (critical) Build questionnaire: rating-scale questions saved with their defined scale, e.g. 1-5 (AC-020); open-text questions saved allowing free text (AC-021); launch is blocked if the questionnaire is empty, prompting at least one question (AC-022).
-US-009 (critical) Select subjects and reviewers: subject + reviewer list saved per cycle (AC-023); system suggests peers/direct reports/manager from reporting lines, HR can accept/add/remove before launch (AC-024); HR is warned pre-launch if a subject has fewer reviewers than the configured minimum threshold (AC-025).
-US-010 (high) Configure minimum-reviewer threshold: HR sets and saves the minimum-reviewer value, applied to report visibility (AC-026); subjects below threshold have their aggregated report withheld with a message that too few responses were received (AC-027).
+### EPIC-002 · draft · source: requirements:EPIC-002
 
-**Related:** US-007, US-008, US-009, US-010, NFR-005, NFR-010
+HR/admin maintains the employee directory and reporting relationships entirely in-app; no HRIS/payroll sync in v1.
 
-### EPIC-004 · approved · source: requirements:EPIC-004
+US-004 (critical): create/edit/deactivate employee records (name, work email, etc.); deactivated employees cannot sign in and are excluded from new cycles but historical data is retained; duplicate emails rejected with validation message. US-005 (high): set/update each employee's manager; manager gains access to that employee's aggregated report; self-manager or direct circular reports are rejected with a clear message. US-006 (low): explicitly documents no HRIS/payroll import/sync exists in v1; directory is manual (matches out-of-scope statement).
 
-Reviewers are invited and reminded by background email jobs so HR is never blocked; delivery failures are recorded for retry.
+**Related:** US-004, US-005, US-006, AC-009, AC-010, AC-011, AC-012, AC-013, AC-014, AC-015, AC-016
 
-US-011 (critical) Invite reviewers by email: launch completion sends each reviewer an email invitation with a feedback link (AC-028); missing/invalid SMTP credentials cause the failure to be recorded and surfaced to HR for retry (AC-029).
-US-012 (high) Send reminders for outstanding feedback: reviewers with outstanding (not submitted) requests in an active cycle get a reminder email, sent on schedule or HR-triggered, with the pending-feedback link (AC-030); reviewers who already submitted are excluded from reminders (AC-031).
+### EPIC-003 · draft · source: requirements:EPIC-003
 
-**Related:** US-011, US-012, NFR-009
+HR/admin creates time-bounded 360° feedback cycles, builds mixed rating-scale/open-text questionnaires, assigns subjects and reviewers, and sets a minimum-reviewer threshold that gates report visibility.
 
-### EPIC-005 · approved · source: requirements:EPIC-005
+US-007 (critical): create cycle (name, review period, start/end dates) in draft; launching (with subjects, reviewers, questionnaire configured) sets status active and triggers invitations; closing stops further submissions. US-008 (critical): questionnaire mixes rating-scale (e.g. 1-5) and open-text questions; cannot launch with an empty questionnaire. US-009 (critical): select subject employees and assign reviewers (peers, direct reports, manager); system suggests reviewers from reporting lines, HR can accept/add/remove; warning shown if a subject is below the minimum-reviewer threshold before launch. US-010 (high): HR sets the minimum-reviewer threshold value, applied to report visibility decisions (ties to NFR-005, anonymity protection).
 
-Reviewers complete rating-scale and open-text questionnaires for assigned subjects anonymously; identities are never shown, only aggregated results, and individual/small-group results are withheld below the minimum-reviewer threshold.
+**Related:** US-007, US-008, US-009, US-010, AC-017, AC-018, AC-019, AC-020, AC-021, AC-022, AC-023, AC-024, AC-025, AC-026, AC-027, NFR-005
 
-US-013 (critical) Submit feedback as a reviewer: assigned reviewer answers questions and submits, recorded against the cycle/subject (AC-032); partial answers can be saved and resumed later (AC-033); submission is blocked once the cycle closes (AC-034).
-US-014 (critical) Preserve reviewer anonymity: individual responses are never attributed to a reviewer in any report or view, only aggregates shown (AC-035); below-threshold subjects have individual/small-group results withheld to prevent re-identification (AC-036).
+### EPIC-004 · draft · source: requirements:EPIC-004
 
-**Related:** US-013, US-014, NFR-004, NFR-005
+Reviewers and subjects are invited and reminded by email through a transactional SMTP provider, run in the background so HR is not blocked.
 
-### EPIC-006 · approved · source: requirements:EPIC-006
+US-011 (critical): on cycle launch each assigned reviewer gets an email invitation with a submission link; if SMTP credentials are missing/invalid, the failure is recorded and surfaced to HR for retry (NFR-009). US-012 (high): reviewers with outstanding feedback in an active cycle get reminder emails (scheduled or HR-triggered) with their pending link; reviewers who already submitted are excluded.
 
-Subjects, their manager and HR view an aggregated per-employee 360° report in-app (rating results plus collated comments, no identities) and can export it to PDF; results are withheld below threshold; no org-wide analytics in v1.
+**Related:** US-011, US-012, AC-028, AC-029, AC-030, AC-031, NFR-009
 
-US-015 (critical) View aggregated report in-app: authorised viewers see aggregated ratings and collated comments with no reviewer identities once threshold is met (AC-037); below threshold the report is withheld with an explanatory message (AC-038); unauthorised managers/employees are denied access (AC-039).
-US-016 (high) Export report to PDF: a visible report can be exported to PDF with the same aggregated content and no identities (AC-040); a withheld report produces no PDF and shows the same withheld message (AC-041).
-US-017 (low) No advanced org-wide analytics in v1: only per-employee aggregated reports and the cycle progress dashboard are available; cross-org trend analytics/benchmarking are explicitly out of scope for v1 (AC-042).
+### EPIC-005 · draft · source: requirements:EPIC-005
 
-**Related:** US-015, US-016, US-017, NFR-004, NFR-005
+Reviewers submit anonymous feedback; identities are never attributed and only aggregated results are ever shown.
 
-### EPIC-007 · approved · source: requirements:EPIC-007
+US-013 (critical): reviewer answers rating-scale and open-text questions per assigned subject, can save partial progress and resume, and submission is blocked once the cycle closes. US-014 (critical): reviewer identity is never shown attributed in any report/view (NFR-004); if submitted-reviewer count for a subject is below the minimum threshold, individual/small-group results are withheld to prevent re-identification (NFR-005).
 
-HR/admin dashboard tracks cycle progress and completion so outstanding feedback can be followed up before close.
+**Related:** US-013, US-014, AC-032, AC-033, AC-034, AC-035, AC-036, NFR-004, NFR-005
 
-US-018 (high) Monitor cycle progress and completion: dashboard shows overall completion and, per subject, submitted vs outstanding reviewer counts (AC-043); subjects below the minimum-reviewer threshold are flagged (AC-044); figures refresh to reflect the latest submissions (AC-045).
+### EPIC-006 · draft · source: requirements:EPIC-006
 
-**Related:** US-018
+Per-employee aggregated 360° report viewable in-app by the subject, their manager and HR, exportable to PDF, gated by the minimum-reviewer threshold; no org-wide analytics in v1.
 
-### EPIC-008 · approved · source: requirements:EPIC-008
+US-015 (critical): authorised viewers see aggregated ratings + collated open-text comments with no reviewer identities when threshold is met; otherwise report is withheld with an explanatory message; unauthorised viewers are denied. US-016 (high): any visible report can be exported to PDF with identical aggregated content and no identities; withheld reports produce no PDF, same message shown. US-017 (low): confirms scope is per-employee aggregation plus the cycle dashboard only -- no cross-org trend analytics/benchmarking in v1.
 
-DPDP Act 2023 compliance: a privacy notice is presented and acknowledgement recorded, HR actions data-principal access/correction/erasure requests, all data is hosted in India, and the app assumes an adults-only workforce (no parental-consent flows).
+**Related:** US-015, US-016, US-017, AC-037, AC-038, AC-039, AC-040, AC-041, AC-042, NFR-004, NFR-005
 
-DPDP Act 2023 -- notice and consent (US-019): user is shown a privacy notice on first sign-in or when updated (AC-046); presentation/acknowledgement is recorded (AC-047).
-DPDP Act 2023 -- data-principal rights (US-020): HR records and actions access/correction/erasure requests, logging the action (AC-048); erasure removes personal data while retaining anonymised aggregates that cannot re-identify anyone (AC-049).
-DPDP Act 2023 -- data residency (US-021): employee and feedback data are hosted on infrastructure located in India, AWS Mumbai ap-south-1 per architecture (AC-050); input states no sector-specific RBI/SEBI/IRDAI localisation applies since this is an internal HR tool, not a regulated financial/insurance platform.
-DPDP Act 2023 -- children's data (US-022): app assumes all employees are 18+, so no parental-consent or child-data workflows are built (AC-051); the input notes minors in future employment would require a future DPDP child-consent change.
+### EPIC-007 · draft · source: requirements:EPIC-007
 
-**Related:** US-019, US-020, US-021, US-022, NFR-006, NFR-007, NFR-008, NFR-012
+HR/admin dashboard shows per-cycle progress and completion so HR can follow up on outstanding feedback.
 
-- ⚠ DPDP 'Significant Data Fiduciary' duties (a DPO located in India, data protection audits, data protection impact assessments) are not addressed by any requirement, design, or test in the input -- confirm whether the organisation's scale/data sensitivity triggers this classification.
-- ⚠ DPDP consent-manager provisions are not addressed by any requirement.
-- ⚠ Breach notification duties (DPDP Act: notify the Data Protection Board and affected individuals; CERT-In: report cyber incidents within 6 hours and retain ICT logs for 180 days) are not defined as a requirement; architecture only notes CloudWatch logs 'supporting CERT-In retention' without a stated retention period or breach-notification process.
+US-018 (high): dashboard shows overall completion and, per subject, submitted vs outstanding reviewer counts; subjects below the minimum-reviewer threshold are flagged; figures refresh to reflect latest submissions.
 
-### REQ-NFR · approved · source: requirements:non-functional
+**Related:** US-018, AC-043, AC-044, AC-045
 
-Twelve non-functional requirements cover security, privacy/anonymity, DPDP compliance, availability of background email, and scale, plus two explicitly accepted risks (no SSO, adults-only).
+### EPIC-008 · draft · source: requirements:EPIC-008
 
-NFR-001 (security) No account enumeration on sign-in -- applies to US-001.
-NFR-002 (security) Sessions end on sign-out -- applies to US-001.
-NFR-003 (security) Time-limited password-reset links, valid only unexpired, new password must meet password rules -- applies to US-003.
-NFR-004 (privacy) Reviewer anonymity in all views/exports, never attributed -- applies to US-013/014/015/016.
-NFR-005 (privacy) Minimum-reviewer threshold gates report visibility to prevent re-identification -- applies to US-010/014/015/016.
-NFR-006 (privacy) Erasure retains only anonymised aggregates -- applies to US-020.
-NFR-007 (compliance) Data residency in India; target AWS Mumbai ap-south-1 -- applies to US-021.
-NFR-008 (compliance) DPDP accountability records: privacy-notice acknowledgement and rights-request actions logged -- applies to US-019/020.
-NFR-009 (availability) Background queued email with recorded delivery failures for invitations/reminders -- applies to US-011/012.
-NFR-010 (scalability) Single internal org, correctness over scale, target under ~200 employees -- applies to the whole system.
-NFR-011 (security, accepted risk) No SSO in v1, email/password only -- applies to US-001.
-NFR-012 (compliance, accepted risk) Adults-only, no parental-consent workflows -- applies to US-022.
+DPDP Act 2023 compliance: privacy notice, data-principal rights handling via HR, India data residency, and an adults-only assumption (no parental consent flows).
+
+US-019 (high) -- DPDP Act 2023: notice obligation. Privacy notice shown on first sign-in or on update; presentation/acknowledgement is recorded (NFR-008). US-020 (high) -- DPDP Act 2023: data-principal rights (access, correction, erasure). HR records and actions rights requests in-app; actions are logged; erasure removes personal data but may retain aggregated, anonymised feedback that cannot re-identify anyone (NFR-006). US-021 (high) -- DPDP Act 2023: data residency. All employee and feedback data stored on infrastructure located in India (target: AWS Mumbai ap-south-1, NFR-007); assumption stated that no RBI/SEBI/IRDAI sector localisation applies since this is an internal HR tool. US-022 (low, accepted risk) -- DPDP Act 2023: no parental-consent workflows built since all employees are assumed adults (18+) (NFR-012); flagged as a future change if minors are ever employed.
+
+**Related:** US-019, US-020, US-021, US-022, AC-046, AC-047, AC-048, AC-049, AC-050, AC-051, NFR-006, NFR-007, NFR-008, NFR-012
+
+- ⚠ DPDP: input documents notice and acknowledgement but does not describe an explicit consent-capture or easy-withdrawal mechanism (vs. notice-only) as DPDP rules require for consent-based processing -- needs confirmation whether processing relies on 'legitimate use' or consent.
+- ⚠ DPDP: no mention of a consent manager mechanism.
+- ⚠ DPDP: no assessment of whether this organisation/processing qualifies as a Significant Data Fiduciary (which would require a DPO in India, audits and impact assessments).
+- ⚠ DPDP breach notification (to the Data Protection Board and affected individuals) is not addressed by any requirement.
+- ⚠ CERT-In: 6-hour cyber-incident reporting process and explicit 180-day ICT log retention policy are not addressed (architecture only generally mentions CloudWatch logs 'supporting' CERT-In retention).
+
+### REQ-NFR · draft · source: requirements:non-functional requirements
+
+12 non-functional requirements cover security, privacy, compliance, availability and scale, each tied to specific stories.
+
+NFR-001 security: no account enumeration on sign-in. NFR-002 security: sign-out ends session. NFR-003 security: time-limited password reset links. NFR-004 privacy: reviewer anonymity in all views/exports. NFR-005 privacy: minimum-reviewer threshold gates report visibility. NFR-006 privacy: erasure keeps only anonymised aggregates. NFR-007 compliance -- DPDP Act 2023: data residency in India, target AWS Mumbai ap-south-1. NFR-008 compliance -- DPDP Act 2023: accountability records (privacy notice acknowledgement, HR rights-request actions logged). NFR-009 availability: background email via queue with recorded delivery failures for retry. NFR-010 scalability: sized for a single org under ~200 employees, correctness over scale. NFR-011 security (accepted risk): no SSO in v1. NFR-012 compliance (accepted risk) -- DPDP Act 2023: adults-only, no parental-consent workflows.
 
 **Related:** US-001, US-003, US-010, US-011, US-012, US-013, US-014, US-015, US-016, US-019, US-020, US-021, US-022
 <!-- sdlc:auto:end narrative -->

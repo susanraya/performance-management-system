@@ -5,7 +5,7 @@
 <!-- sdlc:auto:start overview -->
 performance management system
 
-**Documentation version:** v3
+**Documentation version:** v2
 <!-- sdlc:auto:end overview -->
 
 ## Contents
@@ -14,7 +14,7 @@ performance management system
 | Document | State |
 |---|---|
 | [Requirements](requirements/README.md) | v1 approved |
-| [Architecture](architecture/README.md) | 10 entries |
+| [Architecture](architecture/README.md) | 16 entries |
 | [Development](development/README.md) | 14 entries |
 | [Testing](testing/README.md) | 1 entry |
 | [Deployment](deployment/README.md) | 1 entry |
@@ -29,9 +29,9 @@ performance management system
 | [Tests](testing/test-cases.md) | 0 tests |
 | [Deployment guide](deployment/deployment-guide.md) | deployed |
 | [Runbook](deployment/runbook.md) | deployed |
-| [Release notes](deployment/release-notes.md) | 2 releases |
+| [Release notes](deployment/release-notes.md) | 1 release |
 | [Traceability matrix](traceability-matrix.md) | 22 requirements |
-| [Changelog](CHANGELOG.md) | 3 versions |
+| [Changelog](CHANGELOG.md) | 2 versions |
 <!-- sdlc:auto:end contents -->
 
 ## Open gaps
@@ -39,36 +39,39 @@ performance management system
 <!-- sdlc:auto:start open-gaps -->
 ### Requirements
 
-- The three-role / email-password-only assumption is explicitly flagged in the input as needing confirmation ('Correct if different') -- no product-owner confirmation is present in the material provided.
-- DPDP 'Significant Data Fiduciary' duties (a DPO located in India, data protection audits, data protection impact assessments) are not addressed by any requirement, design, or test in the input -- confirm whether the organisation's scale/data sensitivity triggers this classification.
-- DPDP consent-manager provisions are not addressed by any requirement.
-- Breach notification duties (DPDP Act: notify the Data Protection Board and affected individuals; CERT-In: report cyber incidents within 6 hours and retain ICT logs for 180 days) are not defined as a requirement; architecture only notes CloudWatch logs 'supporting CERT-In retention' without a stated retention period or breach-notification process.
+- DPDP: input documents notice and acknowledgement but does not describe an explicit consent-capture or easy-withdrawal mechanism (vs. notice-only) as DPDP rules require for consent-based processing -- needs confirmation whether processing relies on 'legitimate use' or consent.
+- DPDP: no mention of a consent manager mechanism.
+- DPDP: no assessment of whether this organisation/processing qualifies as a Significant Data Fiduciary (which would require a DPO in India, audits and impact assessments).
+- DPDP breach notification (to the Data Protection Board and affected individuals) is not addressed by any requirement.
+- CERT-In: 6-hour cyber-incident reporting process and explicit 180-day ICT log retention policy are not addressed (architecture only generally mentions CloudWatch logs 'supporting' CERT-In retention).
 
 ### Architecture
 
-- This is a planned deployment topology recorded during architecture; no actual deployment phase input (deployment events, environment status) has been provided -- see Deployment section.
-- Architecture phase status is recorded as 'generated' with no explicit architecture sign-off/review step captured, even though the underlying technology choices were already approved by the product owner at the requirements stage -- confirm whether a separate architecture approval occurred.
+- Architecture status is 'generated', not explicitly marked as approved by a human reviewer.
+- No deployment has actually occurred yet per the deployment phase input -- these are planned nodes only, not a confirmed live environment.
+- CERT-In's required 180-day ICT log retention and 6-hour incident reporting process are not explicitly configured or documented beyond a general reference to CloudWatch logs.
 
 ### Development
 
-- Mapping of specific backlog items to this sprint is inferred only from the goal's wording -- the input has no explicit sprint-assignment field; confirm against the actual sprint board.
-- Mapping of specific backlog items to this sprint is inferred only from the goal's wording -- confirm against the actual sprint board.
-- No execution/completion status (ticket state, commits, code review) was provided for these items -- cannot confirm how much, if any, has actually been implemented.
-- No execution/completion status provided.
+- Input gives sprint goals and a flat backlog list but does not explicitly map individual stories/tasks to this sprint -- item-to-sprint assignment above is inferred from the goal wording only.
+- Explicit item-to-sprint assignment not provided in input; inferred from goal text only.
+- No implementation/completion status, code artifacts, or PR references were provided -- only planning assignments.
+- No implementation/completion status provided.
 
 ### Testing
 
-- No testing input available: test strategy, cases, and results are all missing -- cannot confirm acceptance criteria (e.g. anonymity threshold, RBAC, DPDP rights actions) have actually been verified.
+- Testing phase has not started: no test plans, cases, or results were provided for this project.
 
 ### Deployment
 
-- No deployment date/timestamp recorded.
+- No deployment date/timestamp provided.
 - No record of who approved or executed this deployment.
-- No rollback or contingency plan documented.
-- No mapping provided between this deployment and specific requirements (US-001..US-022), design items, dev tickets, or test results, so it cannot be confirmed which features/fixes this version includes.
-- Frontend domain 'amplifyapp.local' and backend domain 'awsapprunner.local' use .local suffixes, which is unusual for production AWS Amplify/App Runner URLs (normally .amazonaws.com or amplifyapp.com); confirm these are correct and not placeholder/internal values.
+- No environment designation given (e.g. production vs. staging) beyond the generic 'live' status.
+- No rollback or incident-response plan recorded for this release.
+- No linkage provided between this deployment and specific requirement IDs (US-001..US-022) or development tickets, so related_ids cannot be populated.
+- No release notes or changelog describing what functionality version 65e950147092 includes relative to prior versions (none referenced).
 
 ### Maintenance
 
-- No maintenance input available -- cannot confirm any production monitoring, incident history, or ongoing support process; notably, no breach-notification or CERT-In incident-reporting process has been recorded anywhere in the project history.
+- Maintenance/post-deployment phase has not started: no notes, incidents, or operational history were provided.
 <!-- sdlc:auto:end open-gaps -->

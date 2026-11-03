@@ -5,13 +5,14 @@
 <!-- sdlc:auto:start narrative -->
 ### DEPLOY-65e950147092 · approved · source: deployment:65e950147092
 
-Performance management system deployed to a live environment at version 65e950147092. Frontend and backend endpoints are published and reachable.
+The performance management system is reported live at version 65e950147092, with a frontend hosted at https://pdefb79bdc254.dshared.amplifyapp.local and a backend at https://defb79bdc254.local.awsapprunner.local.
 
-Status: live. Version/build identifier: 65e950147092. Frontend URL: https://pdefb79bdc254.dshared.amplifyapp.local. Backend URL: https://defb79bdc254.local.awsapprunner.local. No deployment date, deploying actor, approval record, release notes, or rollback plan were included in the input.
+Deployment record states: Status = live; Version = 65e950147092; Frontend URL = https://pdefb79bdc254.dshared.amplifyapp.local; Backend URL = https://defb79bdc254.local.awsapprunner.local. No further detail (deployment date/time, who performed or approved the release, target environment name, rollout method, infrastructure configuration, or rollback procedure) was included in the input.
 
-- ⚠ No deployment date/timestamp recorded.
+- ⚠ No deployment date/timestamp provided.
 - ⚠ No record of who approved or executed this deployment.
-- ⚠ No rollback or contingency plan documented.
-- ⚠ No mapping provided between this deployment and specific requirements (US-001..US-022), design items, dev tickets, or test results, so it cannot be confirmed which features/fixes this version includes.
-- ⚠ Frontend domain 'amplifyapp.local' and backend domain 'awsapprunner.local' use .local suffixes, which is unusual for production AWS Amplify/App Runner URLs (normally .amazonaws.com or amplifyapp.com); confirm these are correct and not placeholder/internal values.
+- ⚠ No environment designation given (e.g. production vs. staging) beyond the generic 'live' status.
+- ⚠ No rollback or incident-response plan recorded for this release.
+- ⚠ No linkage provided between this deployment and specific requirement IDs (US-001..US-022) or development tickets, so related_ids cannot be populated.
+- ⚠ No release notes or changelog describing what functionality version 65e950147092 includes relative to prior versions (none referenced).
 <!-- sdlc:auto:end narrative -->
