@@ -3,11 +3,13 @@
 > Maintained by QuorQ AI SDLC. Text between `sdlc:auto` markers is regenerated; anything outside them is yours and is kept.
 
 <!-- sdlc:auto:start narrative -->
-### DEPLOY-000 · draft
+### DEPLOY-GAP-001 · draft
 
-No deployment has been recorded for this project.
+No deployment has been recorded yet.
 
-No deployment attempts, environments, or release records have been supplied, despite AWS ap-south-1 being the approved target region.
+No deployment phase input (environments stood up, release/deploy events, rollout status) has been provided, despite the architecture phase specifying a full AWS ap-south-1 deployment topology.
 
-- ⚠ No deployment recorded yet: AWS ap-south-1 is the approved target but no environment has actually been provisioned or released to.
+**Related:** ARCH-009
+
+- ⚠ No deployment input available: cannot confirm the AWS ap-south-1 infrastructure described in architecture has actually been provisioned or that any release has occurred.
 <!-- sdlc:auto:end narrative -->

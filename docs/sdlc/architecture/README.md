@@ -5,117 +5,100 @@
 <!-- sdlc:auto:start narrative -->
 ## Overview
 
-### ARCH-001 · approved · source: architecture:summary
+### ARCH-001 · draft · source: architecture:components
 
-Approved v1 architecture for a lightweight internal 360° performance management system serving one Indian company under ~200 staff.
+Six components implement the system: an Angular SPA, a Django/DRF API, a Celery worker, PostgreSQL, a Redis queue, and an SMTP email service, all deployed to AWS Mumbai.
 
-HR/admin maintains an employee directory and reporting lines, builds rating-scale/open-text questionnaires, creates and launches feedback cycles with subjects and reviewers. Reviewers are invited and reminded by email and submit anonymous feedback. Subjects, managers, and HR view aggregated reports (gated by a minimum-reviewer threshold to protect anonymity) and export to PDF. Stack: Angular 22 frontend, Django 5.1 REST+admin backend, PostgreSQL 16, Redis-backed Celery workers; deployed entirely in AWS Mumbai (ap-south-1) for DPDP data-residency, with privacy-notice acknowledgement, HR-actioned data-principal rights, and audit logging built in.
+web -- Angular Web App (Angular 22): role-aware SPA for sign-in, directory, cycle/questionnaire setup, reviewer assignment, feedback submission, reports and the HR dashboard; presents the privacy notice.
+api -- Django API (Django 5.1 + DRF): authentication, RBAC, directory/reporting-line management, cycle/questionnaire/reviewer logic, anonymity and threshold enforcement, report aggregation and PDF generation, DPDP rights requests and audit logging.
+worker -- Celery Worker & Beat (Celery on Django 5.1): background/scheduled jobs -- send invitations on launch, send scheduled/triggered reminders, record delivery failures for HR retry.
+db -- PostgreSQL 16: relational store for employees, reporting lines, cycles, questionnaires, assignments, responses, email logs, privacy acknowledgements, rights requests and audit logs; enforces anonymity/threshold joins; encrypted at rest.
+queue -- Redis 7: message broker for Celery carrying invitation/reminder tasks so HR is never blocked.
+email -- SMTP Email Service: transactional delivery for invitations, reminders and password-reset links via an India-based SMTP provider.
 
-- ⚠ Architecture input does not reference specific requirement IDs (US-001..US-022); no explicit requirement-to-architecture traceability was provided, so related_ids could not be populated for any entry in this phase.
+**Related:** EPIC-001, EPIC-002, EPIC-003, EPIC-004, EPIC-005, EPIC-006, EPIC-007, EPIC-008
 
-### ARCH-002 · approved · source: architecture:components
+### ARCH-002 · draft · source: architecture:critical-path:sign-in-rbac
 
-Six-component system: Angular SPA frontend, Django API/admin backend, Celery worker+beat, PostgreSQL, Redis, and an India-based SMTP provider.
+Sign-in and role-based access critical path: authenticate, issue session/JWT, enforce role and reporting-line checks on every protected request.
 
-- Frontend: Angular 22 Web App — role-aware UI for sign-in, employee directory, cycle/questionnaire setup, reviewer assignment, feedback submission, aggregated reports, PDF export trigger, HR dashboard, and privacy notice.
-- Backend: Django 5.1 Backend (API + Admin) — REST API and Django admin providing email/password auth, role-based access enforcement, directory and reporting-line management with validation, cycle/questionnaire/reviewer logic, anonymity and threshold rules, report aggregation, PDF generation, DPDP notice/rights/audit records; enqueues email jobs.
-- Worker: Celery Worker & Beat (Django 5.1 with django-celery-beat) — processes background invitation emails and scheduled reminder nudges off the Redis queue, records delivery failures for HR retry.
-- DB: PostgreSQL 16 — strictly-relational store for employees, reporting lines, cycles, questionnaires, reviewer assignments, anonymous responses, audit and DPDP records; enforces FKs and uniqueness; hosted in India.
-- Redis: Redis 7 (redis:7-alpine) — message broker for Celery carrying invitation and reminder jobs and the beat schedule.
-- SMTP: SMTP Email Service (SaaS) — delivers transactional email (invitations, reminders, password-reset links) via an India-based provider to keep delivery and logs in-country.
+User authenticates with email/password, receives a session/JWT; every protected request is checked against the user's role and, for reports, the viewer's reporting line relative to the subject. Failed sign-in returns a single generic error to avoid account enumeration.
 
-### ARCH-003 · approved · source: architecture:critical_paths
+**Related:** US-001, US-002, NFR-001, NFR-002
 
-Email/password sign-in establishes a role-scoped session and gates everything the app exposes.
+### ARCH-003 · draft · source: architecture:critical-path:launch-cycle-invite
 
-User authenticates with email and password; a generic error message is returned on failure to avoid account enumeration. On success a session is established and the user's role determines what is reachable in the UI/API. Sign-out ends the session.
+Launch-cycle critical path: validate questionnaire/reviewers, activate the cycle, enqueue invitation emails via Redis for the Celery worker to send over SMTP, recording failures.
 
-- ⚠ No detail provided on session duration, token mechanism, or password-reset flow linkage to this path.
+HR launches a configured cycle; the API validates the questionnaire and reviewers, marks the cycle active, and enqueues invitation emails to each reviewer via Redis. The worker sends mail over SMTP and records any failure for HR retry.
 
-### ARCH-004 · approved · source: architecture:critical_paths
+**Related:** US-007, US-008, US-009, US-011, NFR-009
 
-Launching a configured cycle validates it and triggers asynchronous reviewer invitations.
+### ARCH-004 · draft · source: architecture:critical-path:anonymous-submission
 
-HR launches a configured feedback cycle. Backend validates a non-empty questionnaire and at least the required subjects/reviewers are present, flips cycle status to active, and enqueues invitation emails which are processed by the Celery worker off the Redis queue. Delivery failures are recorded (email_delivery entity) for HR retry.
+Anonymous feedback submission critical path: reviewer answers and saves/submits responses without exposing identity; blocked once the cycle is closed.
 
-**Related:** ARCH-002
+A reviewer opens their assigned request, answers rating-scale and open-text questions, can save partial progress, and submits. Responses are stored against the cycle and subject without exposing reviewer identity; submission is blocked once the cycle is closed.
 
-### ARCH-005 · approved · source: architecture:critical_paths
+**Related:** US-013, US-014, NFR-004
 
-Assigned reviewers submit anonymous feedback, with drafts allowed before cycle close.
+### ARCH-005 · draft · source: architecture:critical-path:aggregated-report
 
-An assigned reviewer answers the questionnaire, may save a partial draft, and submits before the cycle closes. Responses are stored against the cycle subject but are never exposed with reviewer identity; submission is blocked once the cycle is closed.
+Aggregated report critical path: access check, reviewer-count check against threshold, then aggregated ratings/comments or a withheld message; PDF export reuses the same gate.
 
-### ARCH-006 · approved · source: architecture:critical_paths
+An authorised viewer (subject, their manager, or HR) requests a report. The API checks access, counts submitted reviewers, and either returns aggregated ratings plus collated comments with no identities, or withholds it when below the minimum threshold. PDF export reuses the same gate.
 
-Aggregated reports and PDF export are gated by authorisation and a minimum-reviewer anonymity threshold.
+**Related:** US-015, US-016, NFR-004, NFR-005
 
-An authorised viewer (the subject, their manager, or HR) requests a report. Backend checks authorisation and whether submitted reviewers meet the minimum threshold before aggregating ratings and collating comments with no reviewer identities surfaced. The same threshold rule gates PDF export — no PDF is produced if the report is withheld.
+### ARCH-006 · draft · source: architecture:critical-path:dpdp-rights-audit
 
-### ARCH-007 · approved · source: architecture:critical_paths
+DPDP rights-request and audit-logging critical path: HR records and actions access/correction/erasure requests; every action and notice acknowledgement is audit-logged.
 
-Scheduled and on-demand reminders nudge reviewers who have not yet submitted.
+HR records an access, correction or erasure request against an employee and actions it in-app. Erasure removes personal data while retaining anonymised aggregates that cannot re-identify anyone. Every action and privacy-notice acknowledgement is written to the audit log.
 
-Celery beat fires on a schedule; the worker finds reviewers with outstanding submissions in active cycles and emails reminders, skipping anyone who has already submitted. HR can also trigger the same reminder job on demand via POST /api/cycles/{id}/reminders.
+**Related:** US-019, US-020, NFR-006, NFR-008
 
-**Related:** ARCH-002
+### ARCH-007 · draft · source: architecture:entities
 
-### ARCH-008 · approved · source: architecture:entities
+Eleven relational entities model employees, cycles/questionnaires/assignments/responses, email logs, privacy acknowledgements, rights requests and audit logs.
 
-Relational data model spans employees, cycles, questionnaires, reviewer assignments, anonymous responses, and DPDP/audit records.
+employee(id,name,work_email,password_hash,role,manager_id,is_active,is_erased,created_at); password_reset_token(id,employee_id,token_hash,expires_at,used_at); cycle(id,name,review_period,start_date,end_date,status,min_reviewers,created_by); question(id,cycle_id,type,text,scale_max,display_order); cycle_subject(id,cycle_id,subject_id); reviewer_assignment(id,cycle_subject_id,reviewer_id,relationship,access_token,status,submitted_at); response(id,reviewer_assignment_id,question_id,rating_value,text_value,is_draft); email_log(id,cycle_id,reviewer_assignment_id,email_type,status,error_detail,sent_at); privacy_notice_ack(id,employee_id,notice_version,acknowledged_at); data_rights_request(id,employee_id,request_type,status,requested_at,actioned_by,actioned_at,notes); audit_log(id,actor_id,action,target_type,target_id,detail,created_at).
 
-Entities and key fields:
-- employee: id, name, work_email, password_hash, role, manager_id, is_active, created_at
-- feedback_cycle: id, name, review_period, start_date, end_date, status, min_reviewer_threshold, created_by
-- question: id, cycle_id, text, type, scale_min, scale_max, order
-- cycle_subject: id, cycle_id, subject_id
-- reviewer_assignment: id, cycle_subject_id, reviewer_id, relationship_type, status, invite_token, submitted_at
-- feedback_response: id, assignment_id, question_id, rating_value, text_value, is_draft
-- email_delivery: id, assignment_id, kind, status, error, attempted_at
-- privacy_notice_acknowledgement: id, employee_id, notice_version, acknowledged_at
-- data_rights_request: id, employee_id, type, status, actioned_by, actioned_at, notes
-- audit_log: id, actor_id, action, target, detail, created_at
-Foreign keys and uniqueness constraints (e.g., manager_id self/circular checks, employee email uniqueness) are enforced in PostgreSQL per the anonymity and reporting-line correctness rules.
+**Related:** EPIC-001, EPIC-002, EPIC-003, EPIC-004, EPIC-005, EPIC-006, EPIC-008
 
-### ARCH-009 · approved · source: architecture:endpoints
+### ARCH-008 · draft · source: architecture:endpoints
 
-Full REST API surface covers auth, directory management, cycle lifecycle, feedback submission, reporting, and DPDP operations.
+Nineteen REST endpoints cover auth/password-reset, directory, cycle/questionnaire/subject/reviewer setup, launch/close/reminders, dashboard, assignment draft/submit, report view/PDF, privacy-notice acknowledgement, and rights requests.
 
-Auth: POST /api/auth/login (generic error on failure), POST /api/auth/logout, POST /api/auth/password-reset/request, POST /api/auth/password-reset/confirm.
-Directory: GET /api/employees, POST /api/employees (rejects duplicate email), PATCH /api/employees/{id}, PUT /api/employees/{id}/manager (rejects self/circular reference).
-Cycle setup: POST /api/cycles (draft with name/period/dates/threshold), POST /api/cycles/{id}/questions, POST /api/cycles/{id}/subjects (adds subject + reviewers, returns reporting-line suggestions), GET /api/cycles/{id}/subjects/{sid}/reviewer-suggestions.
-Cycle lifecycle: POST /api/cycles/{id}/launch (validates questionnaire/reviewers, activates, enqueues invitations), POST /api/cycles/{id}/close (blocks further submissions), POST /api/cycles/{id}/reminders (on-demand reminder trigger).
-Feedback: GET /api/assignments/{id} (load questionnaire + draft), PUT /api/assignments/{id}/draft (save partial responses), POST /api/assignments/{id}/submit (blocked if cycle closed).
-Reporting: GET /api/cycles/{id}/subjects/{sid}/report (aggregated if authorised and threshold met, else withheld message), GET /api/cycles/{id}/subjects/{sid}/report.pdf (export, none if withheld), GET /api/cycles/{id}/dashboard (submitted-vs-outstanding counts with below-threshold flags).
-Ops/DPDP: GET /api/email-failures (recorded delivery failures for retry), POST /api/privacy-notice/acknowledge, POST /api/data-rights-requests (HR records access/correction/erasure request), POST /api/data-rights-requests/{id}/action (HR actions request; erasure anonymises while retaining aggregates; logged).
+Auth: POST /api/auth/login, POST /api/auth/logout, POST /api/auth/password-reset/request, POST /api/auth/password-reset/confirm.
+Directory: GET/POST /api/employees, PATCH /api/employees/{id}.
+Cycle setup: POST /api/cycles, POST /api/cycles/{id}/questions, POST /api/cycles/{id}/subjects, GET /api/cycles/{id}/subjects/{sid}/suggested-reviewers.
+Cycle lifecycle: POST /api/cycles/{id}/launch, POST /api/cycles/{id}/close, POST /api/cycles/{id}/reminders, GET /api/cycles/{id}/dashboard.
+Feedback submission: GET /api/assignments/{id}, PUT /api/assignments/{id}/draft, POST /api/assignments/{id}/submit.
+Reports: GET /api/cycles/{id}/subjects/{sid}/report, GET /api/cycles/{id}/subjects/{sid}/report.pdf.
+Privacy/rights: POST /api/privacy-notice/acknowledge, POST /api/rights-requests, POST /api/rights-requests/{id}/action.
 
-**Related:** ARCH-003, ARCH-004, ARCH-005, ARCH-006, ARCH-007
+**Related:** EPIC-001, EPIC-002, EPIC-003, EPIC-004, EPIC-005, EPIC-006, EPIC-007, EPIC-008
 
-### ARCH-010 · approved · source: architecture:deployment_nodes
+### ARCH-009 · draft · source: architecture:deployment-nodes
 
-Entire system deploys in AWS ap-south-1 (Mumbai) to satisfy DPDP data-residency.
+All compute and data are deployed to AWS ap-south-1 (Mumbai): static Angular hosting via S3+CloudFront, Django API and Celery worker on ECS Fargate, PostgreSQL on RDS (encrypted at rest), Redis on an ECS container, and an external India-based SMTP provider.
 
-- Angular Static Hosting: S3 + CloudFront (dev), serving the Angular 22 build as static files.
-- Django App Server: ECS Fargate / EC2 running Django 5.1 on gunicorn.
-- Celery Worker + Beat: ECS Fargate / EC2 running Celery with django-celery-beat.
-- PostgreSQL: Amazon RDS for PostgreSQL 16.
-- Redis: Container (redis:7-alpine) or ElastiCache, Redis 7.
-- SMTP Provider: external India-based SMTP over TLS.
+Angular Static Hosting: S3 + CloudFront (ap-south-1 origin), static files. Django API: ECS Fargate (gunicorn), Python 3.12/Django 5.1. Celery Worker & Beat: ECS Fargate, Python 3.12/Celery. PostgreSQL: Amazon RDS for PostgreSQL 16, encrypted at rest, ap-south-1. Redis: ECS container redis:7-alpine, ap-south-1. SMTP Provider: India-based SMTP, external SaaS.
 
-**Related:** ARCH-002
+**Related:** NFR-007, NFR-010
 
-- ⚠ Deployment node list mixes 'dev' labeling (S3+CloudFront) with production-grade choices (RDS, ECS) without clarifying which nodes are environment-specific vs. production-final — worth confirming before deployment phase.
+- ⚠ This is a planned deployment topology recorded during architecture; no actual deployment phase input (deployment events, environment status) has been provided -- see Deployment section.
 
-### ARCH-011 · approved · source: architecture:technology_decisions
+### ARCH-010 · draft · source: architecture:technology-decisions
 
-Four approved stack decisions: Angular 22, Django 5.1, PostgreSQL 16, and AWS ap-south-1, each justified against functional and DPDP compliance needs.
+Stack choices (Angular 22, Django 5.1, PostgreSQL 16, AWS) were selected over alternatives specifically to satisfy DPDP residency, relational-integrity/anonymity needs, and lightweight CRUD scope; this matches the stack the product owner approved during requirements.
 
-- Frontend: Angular 22 (alternatives considered: React, Vue). Serves role-aware screens (directory, cycle setup, feedback forms, reports, HR dashboard) as an SPA against the Django REST API; forms/router support HR/manager/employee UI boundaries and WCAG-aligned accessible components per RPwD Act 2016/GIGW.
-- Backend: Django 5.1 (alternatives: FastAPI, Flask). Built-in admin, email/password auth and permissions enforce the three roles and back HR-actioned DPDP access/correction/erasure; model-level validation enforces reporting-line and anonymity-threshold correctness.
-- Database: PostgreSQL 16 (alternatives: MySQL, SQLite). Strict foreign keys and uniqueness enforce the highly-relational model (employees→managers, cycles→subjects→reviewers→responses) underpinning anonymity and minimum-reviewer threshold logic; runs in RDS Mumbai for residency.
-- Cloud: AWS (alternatives: Azure, GCP). ap-south-1 (Mumbai) keeps all employee and feedback data in India for DPDP residency, with RDS encryption at rest and TLS in transit for sensitive personal data.
+Frontend Angular 22 (vs React, Vue): built-in HttpClient/router/forms cover all UI stories; accessibility via Angular CDK a11y and semantic components (RPwD Act 2016 / WCAG alignment). Backend Django 5.1 (vs FastAPI, Flask): built-in admin, auth and permissions enforce HR/manager/employee boundaries and back DPDP access/correction/erasure actions; DRF exposes the API; anonymity/threshold logic lives server-side. Database PostgreSQL 16 (vs MySQL, SQLite): strict relational enforcement for the anonymity rule and minimum-reviewer threshold; runs in RDS ap-south-1 for residency; JSONB/full-text available if needed later. Cloud AWS (vs Azure, GCP): ap-south-1 hosts all compute/data in India for DPDP residency, RDS encryption at rest, TLS in transit, CloudWatch logs supporting CERT-In retention.
 
-- ⚠ DPDP Act and RPwD Act 2016/GIGW are cited as compliance drivers but no explicit industry/domain compliance skill or regulation checklist was supplied in this input; a dedicated compliance traceability review (e.g. confirming which specific DPDP obligations — consent, breach notification, data principal rights timelines — are each covered by a requirement/design/test) has not been performed and should be tracked as an open item.
+**Related:** EPIC-001, EPIC-002, EPIC-003, EPIC-004, EPIC-005, EPIC-006, EPIC-007, EPIC-008
+
+- ⚠ Architecture phase status is recorded as 'generated' with no explicit architecture sign-off/review step captured, even though the underlying technology choices were already approved by the product owner at the requirements stage -- confirm whether a separate architecture approval occurred.
 <!-- sdlc:auto:end narrative -->
 
 <!-- sdlc:auto:start building-blocks -->

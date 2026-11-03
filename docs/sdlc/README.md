@@ -5,7 +5,7 @@
 <!-- sdlc:auto:start overview -->
 performance management system
 
-**Documentation version:** v3
+**Documentation version:** v1
 <!-- sdlc:auto:end overview -->
 
 ## Contents
@@ -14,8 +14,8 @@ performance management system
 | Document | State |
 |---|---|
 | [Requirements](requirements/README.md) | v1 approved |
-| [Architecture](architecture/README.md) | 11 entries |
-| [Development](development/README.md) | 7 entries |
+| [Architecture](architecture/README.md) | 10 entries |
+| [Development](development/README.md) | 14 entries |
 | [Testing](testing/README.md) | 1 entry |
 | [Deployment](deployment/README.md) | 1 entry |
 | [Maintenance](maintenance/README.md) | 1 entry |
@@ -23,15 +23,15 @@ performance management system
 | [API (OpenAPI)](architecture/api/openapi.yaml) | generated |
 | [Decisions (ADRs)](architecture/adr/README.md) | 4 decisions |
 | [Sprint plan](development/sprint-plan.md) | 6 sprints |
-| [Developer guide](development/developer-guide.md) | generated |
-| [API reference](development/api-reference.md) | 1 route |
+| [Developer guide](development/developer-guide.md) | not generated yet |
+| [API reference](development/api-reference.md) | 0 routes |
 | [Test report](testing/test-report.md) | not run yet |
 | [Tests](testing/test-cases.md) | 0 tests |
-| [Deployment guide](deployment/deployment-guide.md) | not deployed yet |
-| [Runbook](deployment/runbook.md) | not deployed yet |
-| [Release notes](deployment/release-notes.md) | 0 releases |
+| [Deployment guide](deployment/deployment-guide.md) | deployed |
+| [Runbook](deployment/runbook.md) | deployed |
+| [Release notes](deployment/release-notes.md) | 2 releases |
 | [Traceability matrix](traceability-matrix.md) | 22 requirements |
-| [Changelog](CHANGELOG.md) | 3 versions |
+| [Changelog](CHANGELOG.md) | 1 version |
 <!-- sdlc:auto:end contents -->
 
 ## Open gaps
@@ -39,54 +39,32 @@ performance management system
 <!-- sdlc:auto:start open-gaps -->
 ### Requirements
 
-- Password complexity/rules are referenced (AC-008) but never specified.
-- No SSO in v1 is logged as an accepted risk (NFR-011); confirm this is acceptable long-term.
-- Reset link expiry duration (NFR-003) is not quantified.
-- The 'other required details' for an employee record beyond name and work email are not enumerated.
-- No bulk-import mechanism (e.g. CSV) is mentioned as an alternative to manual entry; confirm this is intentional for a ~200-person org.
-- The reviewer-suggestion algorithm (how many peers/direct reports are suggested, selection logic) is not detailed.
-- No default or example value for the minimum-reviewer threshold is given.
-- Whether a cycle's questionnaire can be reused/cloned across cycles is not addressed.
-- Reminder cadence/schedule (e.g. how many days before cycle close, how often) is not specified.
-- No concrete SMTP provider has been selected yet -- only environment-variable placeholders (SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD) exist.
-- No safeguard is described against re-identification via writing style or content in open-text comments, even when the numeric threshold is met.
-- Exact visual layout/content of the aggregated report (chart types, comment grouping) is not specified.
-- Whether dashboard updates are real-time/push or require a manual page refresh is not specified.
-- No consent-manager mechanism or explicit consent capture/withdrawal flow is described -- only a one-time privacy notice; confirm this satisfies DPDP consent requirements or whether 'legitimate use' is being relied on instead.
-- Whether this organisation qualifies as a Significant Data Fiduciary (requiring a DPO in India, audits, and data protection impact assessments) is not addressed anywhere in requirements.
-- No breach-notification process is described: DPDP Act notification to the Data Protection Board and affected individuals, and CERT-In's 6-hour incident reporting plus 180-day ICT log retention are unaddressed.
-- No accessibility requirements (Rights of Persons with Disabilities Act 2016 / GIGW-WCAG alignment) appear anywhere in the requirements.
-- No rationale is recorded for the Angular 22 frontend choice.
-- No architecture-phase design exists yet to translate this approved stack into concrete components, deployment topology or diagrams.
-- No specific SMTP provider has been selected -- only environment-variable placeholders exist, so in-country delivery/log residency cannot yet be confirmed.
-- Expiry duration and password-rule specifics are not given.
-- The assumption that no sector regulator applies has not been independently verified against this specific organisation's industry.
+- The three-role / email-password-only assumption is explicitly flagged in the input as needing confirmation ('Correct if different') -- no product-owner confirmation is present in the material provided.
+- DPDP 'Significant Data Fiduciary' duties (a DPO located in India, data protection audits, data protection impact assessments) are not addressed by any requirement, design, or test in the input -- confirm whether the organisation's scale/data sensitivity triggers this classification.
+- DPDP consent-manager provisions are not addressed by any requirement.
+- Breach notification duties (DPDP Act: notify the Data Protection Board and affected individuals; CERT-In: report cyber incidents within 6 hours and retain ICT logs for 180 days) are not defined as a requirement; architecture only notes CloudWatch logs 'supporting CERT-In retention' without a stated retention period or breach-notification process.
 
 ### Architecture
 
-- Architecture input does not reference specific requirement IDs (US-001..US-022); no explicit requirement-to-architecture traceability was provided, so related_ids could not be populated for any entry in this phase.
-- No detail provided on session duration, token mechanism, or password-reset flow linkage to this path.
-- Deployment node list mixes 'dev' labeling (S3+CloudFront) with production-grade choices (RDS, ECS) without clarifying which nodes are environment-specific vs. production-final — worth confirming before deployment phase.
-- DPDP Act and RPwD Act 2016/GIGW are cited as compliance drivers but no explicit industry/domain compliance skill or regulation checklist was supplied in this input; a dedicated compliance traceability review (e.g. confirming which specific DPDP obligations — consent, breach notification, data principal rights timelines — are each covered by a requirement/design/test) has not been performed and should be tracked as an open item.
+- This is a planned deployment topology recorded during architecture; no actual deployment phase input (deployment events, environment status) has been provided -- see Deployment section.
+- Architecture phase status is recorded as 'generated' with no explicit architecture sign-off/review step captured, even though the underlying technology choices were already approved by the product owner at the requirements stage -- confirm whether a separate architecture approval occurred.
 
 ### Development
 
-- Input contains no record of actual implementation progress, ticket completion status, code commits, or velocity against the 20-point/sprint capacity -- only the planned assignment is available.
-- No dates are given for sprint start/end, so phase timeline cannot be documented.
-- Sprint-to-item mapping is inferred from goal text, not an explicit input field -- confirm against the actual sprint board.
-- No completion/status data provided for these items.
-- No detail on what specific data-principal rights (access, correction, erasure, grievance) US-020 covers -- only the story title is given.
-- US-006, US-017, US-022 are documented as explicit scope exclusions (no HRIS integration, no advanced analytics, no parental consent in v1) -- these are decisions to confirm are still intended, not defects.
+- Mapping of specific backlog items to this sprint is inferred only from the goal's wording -- the input has no explicit sprint-assignment field; confirm against the actual sprint board.
+- Mapping of specific backlog items to this sprint is inferred only from the goal's wording -- confirm against the actual sprint board.
+- No execution/completion status (ticket state, commits, code review) was provided for these items -- cannot confirm how much, if any, has actually been implemented.
+- No execution/completion status provided.
 
 ### Testing
 
-- Testing phase has not started: no test plan or results exist yet to document.
+- No testing input available: test strategy, cases, and results are all missing -- cannot confirm acceptance criteria (e.g. anonymity threshold, RBAC, DPDP rights actions) have actually been verified.
 
 ### Deployment
 
-- No deployment recorded yet: AWS ap-south-1 is the approved target but no environment has actually been provisioned or released to.
+- No deployment input available: cannot confirm the AWS ap-south-1 infrastructure described in architecture has actually been provisioned or that any release has occurred.
 
 ### Maintenance
 
-- No maintenance history exists yet, since the application has not been deployed.
+- No maintenance input available -- cannot confirm any production monitoring, incident history, or ongoing support process; notably, no breach-notification or CERT-In incident-reporting process has been recorded anywhere in the project history.
 <!-- sdlc:auto:end open-gaps -->
